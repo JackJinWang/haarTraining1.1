@@ -19,9 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{1175AB13-7D74-44F0-ACFE-E43C43762A29}</ProjectGuid>
+    <ProjectGuid>{99E1A96A-EDD2-4A2C-9E5E-9674954F8815}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>haarTraining11</RootNamespace>
+    <RootNamespace>myHaarTraing</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -91,6 +91,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -149,6 +150,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="basic.cpp" />
+    <ClCompile Include="haarTraining.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="myIntergal.cpp" />
+    <ClCompile Include="tinyxml2.cpp" />
+  </ItemGroup>
+  <ItemGroup>
     <ClInclude Include="basic.h" />
     <ClInclude Include="basicStruct.h" />
     <ClInclude Include="classifier.h" />
@@ -158,13 +166,6 @@
     <ClInclude Include="myIntergal.h" />
     <ClInclude Include="MyMat.h" />
     <ClInclude Include="tinyxml2.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="basic.cpp" />
-    <ClCompile Include="haarTraining.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="myIntergal.cpp" />
-    <ClCompile Include="tinyxml2.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

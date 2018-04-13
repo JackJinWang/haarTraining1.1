@@ -15,42 +15,13 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="basic.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="basicStruct.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="classifier.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="delete.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="haarTraining.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="MyAutoBuffer.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="myIntergal.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="MyMat.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="tinyxml2.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="basic.cpp">
+    <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="haarTraining.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="basic.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="myIntergal.cpp">
@@ -59,5 +30,34 @@
     <ClCompile Include="tinyxml2.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="MyMat.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="basic.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="haarTraining.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="basicStruct.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="delete.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="MyAutoBuffer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="myIntergal.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="classifier.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="tinyxml2.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
