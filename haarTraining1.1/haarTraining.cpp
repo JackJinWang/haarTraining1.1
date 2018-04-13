@@ -647,66 +647,38 @@ float cvEvalFastHaarFeature(const CvFastHaarFeature* feature,
 	return ret;
 }
 
-/*
-*预先生成文本
-*/
-static
-void createTxt(const char* featdirname,CvIntHaarFeatures* haarFeatures)
-{
-	int number = haarFeatures->count;
-	char fileName[100];
-//	ofstream *file;
-//	file = new ofstream[number];
-	ofstream file;
-	for (int i = 1;i<=number;++i)
-	{
-		sprintf(fileName, "%s//%d.txt", featdirname,i);//记住更改路径
-//		file[i - 1].open(fileName,ios::out);
-//		file[i - 1].close();
-		file.open(fileName, ios::out);
-		file.close();
-	}
-//	delete []file;
 
-}
 /*
 *获得特征值，并保存处理
 *numprecalculated 内存限制 后续用
 *fileOrMem 特征值存放到文件还是内存 0 内存，1文件
 */
 static
-void icvPrecalculate(int num_samples,CvHaarTrainingData* data, CvIntHaarFeatures* haarFeatures,
+void icvPrecalculate(int stage,int num_samples,CvHaarTrainingData* data, CvIntHaarFeatures* haarFeatures,
 	int numprecalculated,int fileOrMem,const char* filedirname)
 {
 	switch (fileOrMem)
 	{
 	case SAVE_FEATURE_FILE:
 	{
-		//生成批量文件
-		createTxt(filedirname, haarFeatures);
 		//计算特征值
 		char fileName[100];
 		float val = 0.0;
 		//ofstream *file;
 		//file = new ofstream[haarFeatures->count];
 		ofstream file;
-		for (int i = 0; i < num_samples; i++)
+		sprintf(fileName, "%s//feature%d.txt", filedirname, stage);
+		file.open(fileName, ios::out|ios::app);
+		for (int i = 0; i < haarFeatures->count; i++)
 		{
-			for (int j = 0; j < haarFeatures->count; j++)
+			for (int j = 0; j < num_samples; j++)
 			{
-				val = cvEvalFastHaarFeature(haarFeatures->fastfeature+j,data->sum.data.i + i * data->sum.width, data->sum.data.i);
-				//sprintf(fileName, "F:\\workplace\\visualstudio\\facesource\\testpic\\feat\\%d.txt", j+1); 		
-				
-				sprintf(fileName, "%s//%d.txt", filedirname, j + 1);
-			//	file[j].open(fileName, ios::app);
-			//	file[j] << val << endl;
-			//	file[j].close();
-				file.open(fileName, ios::app);
-				file << val << endl;
-				file.close();
-
+				val = cvEvalFastHaarFeature(haarFeatures->fastfeature+i,data->sum.data.i + j * data->sum.width, data->sum.data.i);			
+				file << val << " ";			
 			}
+			file << endl;
 		}
+		file.close();
 
 	//	delete[]file;
 		break;
@@ -779,7 +751,7 @@ void saveXML(int stage,vector<MyStumpClassifier> strongClassifier,const char* di
 
 	}
 	char docName[100];
-	sprintf(docName, "%s//stage%d.xml", dirname, 1002000);
+	sprintf(docName, "%s//change_stage%d.xml", dirname, stage);
 	doc.SaveFile(docName);
 }
 /*
@@ -860,8 +832,8 @@ void icvBoost(int stage, CvIntHaarFeatures* haarFeatures,CvHaarTrainigData* haar
 	int T = 0;
 
 	//for (int T = 0; T < 50;T++)
-	while(((hitRate_real<=minhitrate)||(maxFalse_real >= maxfalsealarms))&&(T <= 200))
-	//while (T <= 150)
+	//while(((hitRate_real<=minhitrate)||(maxFalse_real >= maxfalsealarms))&&(T <= 200))
+	while (T <= 150)
 	{
 		//更新权重
 
@@ -893,42 +865,42 @@ void icvBoost(int stage, CvIntHaarFeatures* haarFeatures,CvHaarTrainigData* haar
 			}
 		}
 		//开始计算弱分类器
-		for (int i = 0;i < feature_size;i++)
+		sprintf(fileName, "%s//feature%d.txt", featdirname, stage);
+		istream.open(fileName, ios::in);
+		if (!istream)
 		{
-			if ((i == 1)||(i == 2)||(i == 3))
+			printf("%s打开错误\n", fileName);
+			return;
+		}
+		//for (int i = 0;i < feature_size;i++)
+		int i = 0;//弱分类器循环计数
+		while (getline(istream, str))   //按行读取,遇到换行符结束
+		{
+			int result;
+			//将字符串读到input中 
+			stringstream input(str);
+			//依次输出到result中，并存入res中 
+			int count = 0;
+			while (input >> result)
 			{
-				int ok = 0;
-			}
-			sprintf(fileName, "%s//%d.txt", featdirname, i + 1);//记住更改路径
-			istream.open(fileName, ios::in);
-			if (!istream)
-			{
-				printf("%s打开错误\n", fileName);
-				return;
-			}
-			int count = 0;// 用作计数
-			while (getline(istream, str))   //按行读取,遇到换行符结束
-			{
-				stringstream linestream;
-				linestream << str;
-				linestream >> vector_feat[count];
+				vector_feat[count] = result;
 				idx[count] = count;
 				count++;
-			}
+			}			
 			//对vector排序
 			bubbleSort(vector_feat, idx, sampleNumber);
 			//对vector数值进行筛选
 			vector <float> threArray;
 			threArray.push_back(vector_feat[0]);
-			for (int i = 0;i < sampleNumber - 1;i++)
+			for (int ii = 0;ii < sampleNumber - 1;ii++)
 			{
-				if (vector_feat[i + 1] == vector_feat[i])
+				if (vector_feat[ii + 1] == vector_feat[ii])
 				{
 					continue;
 				}
 				else
 				{
-					threArray.push_back(vector_feat[i+1]);
+					threArray.push_back(vector_feat[ii+1]);
 				}
 			}
 			
@@ -981,7 +953,7 @@ void icvBoost(int stage, CvIntHaarFeatures* haarFeatures,CvHaarTrainigData* haar
 				//两个分数相加四舍五入的原因会出现负数情况
 				if (error <= 0)
 				{
-					error = 0.0000000000001;
+					error = -1 * error;
 				}
 				if (k == 0)
 				{
@@ -1017,27 +989,28 @@ void icvBoost(int stage, CvIntHaarFeatures* haarFeatures,CvHaarTrainigData* haar
 				currentWeakClassifier.error = tempWeakClassifier.error;
 			}
 			istream.close();
+			i++;
 		}
 		
 		strongClassifier.push_back(currentWeakClassifier);
 		//预测
-		
+		/*
 		predit_result = predict(predit_result,sampleNumber, haarFeatures, haarTrainingData,strongClassifier);
 	
-		for (int i = 0;i < sampleNumber;i++)
+		for (int iii = 0;iii < sampleNumber;iii++)
 		{
-			if ((predit_result[i] == 1) && (haarTrainingData->cls.data.fl[i] == 1.0))
+			if ((predit_result[iii] == 1) && (haarTrainingData->cls.data.fl[iii] == 1.0))
 				hitRate_real++;
-			else if ((predit_result[i] == 1) && (haarTrainingData->cls.data.fl[i] == 0.0))
+			else if ((predit_result[iii] == 1) && (haarTrainingData->cls.data.fl[iii] == 0.0))
 				maxFalse_real++;
 		}
 		hitRate_real = hitRate_real / num_pos;
 		maxFalse_real = maxFalse_real / num_neg;
-		
+		*/
 		T++;
 	}
 
-	saveXML(0, strongClassifier,dirname);
+	saveXML(stage, strongClassifier,dirname);
  	delete[]vector_feat;
 	delete[]idx;
 	delete[]m_result;
@@ -1145,8 +1118,8 @@ void myHaarTraining(const char* dirname,
 	getPicture(training_data, number_neg, nneg, NEG_FLAG, winsize);
 	//boost过程
 	//计算特征
-	icvPrecalculate(npos+nneg,training_data, haar_features,numprecalculated, SAVE_FEATURE_FILE, featuredir);
-	cout << "直接计算" << endl;
+	icvPrecalculate(current_stage,npos+nneg,training_data, haar_features,numprecalculated, SAVE_FEATURE_FILE, featuredir);
+//	cout << "直接计算" << endl;
 	icvBoost(current_stage, haar_features, training_data,
 		featuredir, dirname, npos, nneg, numsplits, equalweights, dirname,minhitrate,maxfalsealarm);
 	_MY_END_
