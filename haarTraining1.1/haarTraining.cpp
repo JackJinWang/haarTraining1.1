@@ -776,7 +776,7 @@ int* predict(int* preResult,int pictureNum,CvIntHaarFeatures* haarFeatures, CvHa
 	/*
 	*对图片进行预测分类
 	*/
-
+	sum = sum * 0.5;
 	for (int i = 0;i < pictureNum;i++)
 	{
 		float val = 0.0f;
@@ -785,11 +785,11 @@ int* predict(int* preResult,int pictureNum,CvIntHaarFeatures* haarFeatures, CvHa
 		{
 			int featureNum = strongClassifier[j].compidx;
 			val = cvEvalFastHaarFeature(haarFeatures->fastfeature + featureNum, haarTrainingData->sum.data.i + i * haarTrainingData->sum.width, haarTrainingData->sum.data.i);
-			if ((val < strongClassifier[j].threshold) && (haarTrainingData->cls.data.fl[i] == strongClassifier[j].left))
+			if ((val < strongClassifier[j].threshold) && (1 == strongClassifier[j].left))
 			{
 				predictSum = predictSum + at[j];
 			}
-			else if ((val > strongClassifier[j].threshold) && (haarTrainingData->cls.data.fl[i] == strongClassifier[j].right))
+			else if ((val > strongClassifier[j].threshold) && (1 == strongClassifier[j].right))
 			{
 				predictSum = predictSum + at[j];
 			}
@@ -824,17 +824,28 @@ void icvBoost(int stage, CvIntHaarFeatures* haarFeatures,CvHaarTrainigData* haar
 	MyStumpClassifier currentWeakClassifier; //当前阶弱分类器
 	int *vector_feat = new int[sampleNumber];              //特征向量，记住要释放
 	int *idx = new int[sampleNumber];						//特征索引号	
-	int *m_result = new int[sampleNumber];       //m阶分类结果
+	int *m_result = new int[sampleNumber];       //临时分类结果
+	int *current_result = new int[sampleNumber]; //t阶分类结果
+	int *strong_result = new int[sampleNumber]; //t阶强分类结果
 	int *predit_result = new int[sampleNumber]; //阶段预测
 												//计算TP,FP
 	float hitRate_real = 0;
 	float maxFalse_real = 1;
 	int T = 0;
-
+	
 	//for (int T = 0; T < 50;T++)
 	//while(((hitRate_real<=minhitrate)||(maxFalse_real >= maxfalsealarms))&&(T <= 200))
-	while (T <= 150)
+	while (T <= 120)
 	{
+		cout <<T<< "开始";
+		//文件读入
+		sprintf(fileName, "%s//feature%d.txt", featdirname, stage);
+		istream.open(fileName, ios::in);
+		if (!istream)
+		{
+			printf("%s打开错误\n", fileName);
+			return;
+		}
 		//更新权重
 
 		if (T == 0)
@@ -845,13 +856,13 @@ void icvBoost(int stage, CvIntHaarFeatures* haarFeatures,CvHaarTrainigData* haar
 				num_pos, posweight, 1.0F, num_neg, negweight, 0.0F);
 		}
 		else
-		{
+		{ //m_result[]=1 上一轮预测正确
 			float bt;
 			bt = currentWeakClassifier.error / (1.0f - currentWeakClassifier.error);
 			float sum = 0.0f;
 			for (int ll = 0;ll < sampleNumber;ll++)
 			{
-				if((1 - m_result[ll])==1)
+				if(strong_result[ll]==1)
 				haarTrainingData->weights.data.fl[ll] = haarTrainingData->weights.data.fl[ll] * pow(bt, 1);
 				else
 					haarTrainingData->weights.data.fl[ll] = haarTrainingData->weights.data.fl[ll] * pow(bt, 0);
@@ -865,13 +876,7 @@ void icvBoost(int stage, CvIntHaarFeatures* haarFeatures,CvHaarTrainigData* haar
 			}
 		}
 		//开始计算弱分类器
-		sprintf(fileName, "%s//feature%d.txt", featdirname, stage);
-		istream.open(fileName, ios::in);
-		if (!istream)
-		{
-			printf("%s打开错误\n", fileName);
-			return;
-		}
+
 		//for (int i = 0;i < feature_size;i++)
 		int i = 0;//弱分类器循环计数
 		while (getline(istream, str))   //按行读取,遇到换行符结束
@@ -879,6 +884,7 @@ void icvBoost(int stage, CvIntHaarFeatures* haarFeatures,CvHaarTrainigData* haar
 			int result;
 			//将字符串读到input中 
 			stringstream input(str);
+			//cout << i << ":" << str <<endl;
 			//依次输出到result中，并存入res中 
 			int count = 0;
 			while (input >> result)
@@ -919,6 +925,8 @@ void icvBoost(int stage, CvIntHaarFeatures* haarFeatures,CvHaarTrainigData* haar
 				for (int n = 0;n < sampleNumber;n++)
 				{
 					float object = haarTrainingData->cls.data.fl[idx[n]];  //取出当前样本标签
+					
+					
 					if ((vector_feat[n] < threshold) && (object != left))    //如果左侧样本错误
 					{
 						errorL = errorL + haarTrainingData->weights.data.fl[idx[n]] * 1.0;
@@ -933,6 +941,7 @@ void icvBoost(int stage, CvIntHaarFeatures* haarFeatures,CvHaarTrainigData* haar
 					}
 					else if (vector_feat[n] > threshold)
 						m_result[idx[n]] = 1;
+						
 				}
 				//	error = MIN(errorL + errorR, 1 - errorL - errorR);
 				if (errorL + errorR > 0.5)//左右极性交换
@@ -951,10 +960,12 @@ void icvBoost(int stage, CvIntHaarFeatures* haarFeatures,CvHaarTrainigData* haar
 				else
 					error = errorL + errorR;
 				//两个分数相加四舍五入的原因会出现负数情况
-				if (error <= 0)
+				if (error < 0)
 				{
 					error = -1 * error;
+					//error = 0.000000000001;
 				}
+				
 				if (k == 0)
 				{
 					tempWeakClassifier.compidx = i;
@@ -962,6 +973,11 @@ void icvBoost(int stage, CvIntHaarFeatures* haarFeatures,CvHaarTrainigData* haar
 					tempWeakClassifier.right = right;
 					tempWeakClassifier.threshold = threshold;
 					tempWeakClassifier.error = error;
+					//上一轮预测结果记录
+					for (int il = 0;il < sampleNumber;il++)
+					{
+						current_result[il] = m_result[il];
+					}
 				}
 				else if (error < tempWeakClassifier.error)
 				{
@@ -970,6 +986,11 @@ void icvBoost(int stage, CvIntHaarFeatures* haarFeatures,CvHaarTrainigData* haar
 					tempWeakClassifier.right = right;
 					tempWeakClassifier.threshold = threshold;
 					tempWeakClassifier.error = error;
+					//上一轮预测结果记录
+					for (int il = 0;il < sampleNumber;il++)
+					{
+						current_result[il] = m_result[il];
+					}
 				}
 			}
 			if (i == 0)
@@ -979,6 +1000,11 @@ void icvBoost(int stage, CvIntHaarFeatures* haarFeatures,CvHaarTrainigData* haar
 				currentWeakClassifier.right = tempWeakClassifier.right;
 				currentWeakClassifier.threshold = tempWeakClassifier.threshold;
 				currentWeakClassifier.error = tempWeakClassifier.error;
+				//上一轮预测结果记录
+				for (int il = 0;il < sampleNumber;il++)
+				{
+					strong_result[il] = current_result[il];
+				}
 			}
 			else if (tempWeakClassifier.error < currentWeakClassifier.error)
 			{
@@ -987,8 +1013,13 @@ void icvBoost(int stage, CvIntHaarFeatures* haarFeatures,CvHaarTrainigData* haar
 				currentWeakClassifier.right = tempWeakClassifier.right;
 				currentWeakClassifier.threshold = tempWeakClassifier.threshold;
 				currentWeakClassifier.error = tempWeakClassifier.error;
+				//上一轮预测结果记录
+				for (int il = 0;il < sampleNumber;il++)
+				{
+					strong_result[il] = current_result[il];
+				}
 			}
-			istream.close();
+	
 			i++;
 		}
 		
@@ -1007,13 +1038,17 @@ void icvBoost(int stage, CvIntHaarFeatures* haarFeatures,CvHaarTrainigData* haar
 		hitRate_real = hitRate_real / num_pos;
 		maxFalse_real = maxFalse_real / num_neg;
 		*/
+		cout << T << "结束"<<endl;
 		T++;
+		istream.close();
 	}
-
+	
 	saveXML(stage, strongClassifier,dirname);
  	delete[]vector_feat;
 	delete[]idx;
 	delete[]m_result;
+	delete[]current_result;
+	delete[]strong_result;
 }
 /*
 * 释放空间
@@ -1104,6 +1139,7 @@ void myHaarTraining(const char* dirname,
 	//读入图像
 	number_pos = getRand(number_pos,0, cvposdata->count - 1,npos);
 	number_neg = getRand(number_neg, 0, cvbgdata->count - 1, nneg);
+	
 	for (int i = 0;i < npos;i++)
 	{
 		number_pos[i] = i;
@@ -1112,6 +1148,7 @@ void myHaarTraining(const char* dirname,
 	{
 		number_neg[i] = i;
 	}
+	
 	//收集样本 级联要替换样本
 	trainingdata_number = 0;
 	getPicture(training_data, number_pos,npos,POS_FLAG,winsize);
